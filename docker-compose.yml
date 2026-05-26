@@ -9,6 +9,7 @@ services:
       - "5432:5432"
     volumes:
       - ./init_scripts:/docker-entrypoint-initdb.d
+      - pg_data:/var/lib/postgresql/data
   python:
     build: .
     volumes:
@@ -17,3 +18,6 @@ services:
       - "8000:8000"
     depends_on:
       - postgres
+
+volumes:
+  pg_data:
