@@ -112,8 +112,10 @@ actor_df\
     .join(category_df, "category_id")\
     .filter("name = 'Children'")\
     .groupBy("first_name", "last_name")\
-    .count()\
-    .orderBy(F.desc("count")).limit(3).show()
+    .agg(F.count("film_id").alias("count"))\
+    .withColumn("rank", F.dense_rank().over(Window.orderBy(F.desc("count"))))\
+    .filter("rank <= 3")\
+    .orderBy("rank").show()
 
 # =====================================================================
 # TASK 6
@@ -135,35 +137,42 @@ city_df\
     .orderBy(F.desc("inactive")).show()
          
 
-# # TASK 7
-# # Output the category of movies that have the highest number of total rental hours 
-# # in the cities (customer.address_id in this city), and that start with the letter “a”. 
-# # Do the same for cities with a “-” symbol.
-# # (Вывести категорию с наибольшим кол-вом часов аренды в городах на букву “a”. 
-# # Сделать то же самое для городов с символом “-”)
-# # =====================================================================
-# print("\n--- TASK 7 ---")
-# # Твой код здесь:
+# TASK 7
+# Output the category of movies that have the highest number of total rental hours 
+# in the cities (customer.address_id in this city), and that start with the letter “a”. 
+# Do the same for cities with a “-” symbol.
+# (Вывести категорию с наибольшим кол-вом часов аренды в городах на букву “a”. 
+# Сделать то же самое для городов с символом “-”)
+# =====================================================================
+print("\n--- TASK 7 ---")
 
-# category_df\
-#     .join(film_category_df, "category_id")\
-#     .join(film_df, "film_id")\
-#     .join(inventory_df, "film_id")\
-#     .join(rental_df, "inventory_id")\
-#     .join(customer_df, "customer_id")\
-#     .join(address_df, "address_id")\
-#     .join(city_df, "city_id")\
-#     .filter("city LIKE 'a%'").groupBy("name").sum("rental_duration").orderBy(F.desc("sum(rental_duration)")).limit(1).union(
-#         category_df\
-#             .join(film_category_df, "category_id")\
-#             .join(film_df, "film_id")\
-#             .join(inventory_df, "film_id")\
-#             .join(rental_df, "inventory_id")\
-#             .join(customer_df, "customer_id")\
-#             .join(address_df, "address_id")\
-#             .join(city_df, "city_id")\
-#             .filter("city LIKE '%-%'").groupBy("name").sum("rental_duration").orderBy(F.desc("sum(rental_duration)")).limit(1)
-#     ).show()
+rental_with_hours_df = rental_df.withColumn(
+    "actual_hours", 
+    (F.unix_timestamp("return_date") - F.unix_timestamp("rental_date")) / 3600
+)
 
-# # =====================================================================
+base_df = category_df \
+    .join(film_category_df, "category_id") \
+    .join(inventory_df, "film_id") \
+    .join(rental_with_hours_df, "inventory_id") \
+    .join(customer_df, "customer_id") \
+    .join(address_df, "address_id") \
+    .join(city_df, "city_id")
+
+df_city_a = base_df \
+    .filter(F.lower(F.col("city")).startswith("a")) \
+    .groupBy(category_df["name"]) \
+    .agg(F.sum("actual_hours").alias("total_hours")) \
+    .orderBy(F.desc("total_hours")) \
+    .limit(1)
+
+df_city_dash = base_df \
+    .filter(F.col("city").contains("-")) \
+    .groupBy(category_df["name"]) \
+    .agg(F.sum("actual_hours").alias("total_hours")) \
+    .orderBy(F.desc("total_hours")) \
+    .limit(1)
+
+df_city_a.union(df_city_dash).show()
+
 spark.stop()
