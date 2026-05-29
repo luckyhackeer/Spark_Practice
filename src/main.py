@@ -9,6 +9,8 @@ load_dotenv()
 PG_USER = os.getenv("POSTGRES_USER")
 PG_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 PG_DATABASE = os.getenv("POSTGRES_DB")
+PG_HOST = os.getenv("POSTGRES_HOST") 
+PG_PORT = os.getenv("POSTGRES_PORT")
 
 spark = SparkSession.builder \
     .appName("Pagila_Practice") \
@@ -19,7 +21,7 @@ spark = SparkSession.builder \
 def read_table(table_name:str):
     return spark.read \
         .format("jdbc") \
-        .option("url", f"jdbc:postgresql://postgres:5432/{PG_DATABASE}") \
+        .option("url", f"jdbc:postgresql://{PG_HOST}:{PG_PORT}/{PG_DATABASE}") \
         .option("driver", "org.postgresql.Driver") \
         .option("dbtable", table_name) \
         .option("user", PG_USER) \
