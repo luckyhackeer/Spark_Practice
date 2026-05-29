@@ -1,2 +1,2 @@
 pyspark==3.5.0
-python-dotenv==1.0.1
+pydantic_settings==2.14.1
