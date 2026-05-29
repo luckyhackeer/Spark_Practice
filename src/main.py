@@ -64,7 +64,7 @@ actor_df\
     .join(film_actor_df, "actor_id")\
     .join(inventory_df, "film_id")\
     .join(rental_df, "inventory_id")\
-    .groupBy("first_name", "last_name")\
+    .groupBy("actor_id","first_name", "last_name")\
     .agg(F.count("rental_id").alias("count"))\
     .orderBy(F.desc("count")).limit(10).show()
 
@@ -111,7 +111,7 @@ actor_df\
     .join(film_category_df, "film_id")\
     .join(category_df, "category_id")\
     .filter("name = 'Children'")\
-    .groupBy("first_name", "last_name")\
+    .groupBy("actor_id","first_name", "last_name")\
     .agg(F.count("film_id").alias("count"))\
     .withColumn("rank", F.dense_rank().over(Window.orderBy(F.desc("count"))))\
     .filter("rank <= 3")\
