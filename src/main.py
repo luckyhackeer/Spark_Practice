@@ -159,6 +159,8 @@ base_df = category_df \
     .join(address_df, "address_id") \
     .join(city_df, "city_id")
 
+base_df.cache()
+
 df_city_a = base_df \
     .filter(F.lower(F.col("city")).startswith("a")) \
     .groupBy(category_df["name"]) \
