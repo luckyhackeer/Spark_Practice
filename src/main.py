@@ -166,14 +166,14 @@ df_city_a = base_df \
     .groupBy(category_df["name"]) \
     .agg(F.sum("actual_hours").alias("total_hours")) \
     .orderBy(F.desc("total_hours")) \
-    .limit(1)
+    .limit(1).alias("cities_a")
 
 df_city_dash = base_df \
     .filter(F.col("city").contains("-")) \
     .groupBy(category_df["name"]) \
     .agg(F.sum("actual_hours").alias("total_hours")) \
     .orderBy(F.desc("total_hours")) \
-    .limit(1)
+    .limit(1).alias("cities_dash")
 
 df_city_a.union(df_city_dash).show()
 
