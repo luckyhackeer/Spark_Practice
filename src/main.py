@@ -29,7 +29,7 @@ def read_table(table_name:str):
         .load()
 
 film_df = read_table("film")
-category_df = read_table("category")
+category_df = read_table("category").alias("category")
 film_category_df = read_table("film_category")
 actor_df = read_table("actor")
 film_actor_df = read_table("film_actor")
@@ -93,7 +93,6 @@ print("\n--- TASK 4 ---")
 
 film_df\
     .join(inventory_df, "film_id","left_anti")\
-    .filter("inventory_id is null")\
     .select("title")\
     .show()
 
@@ -148,32 +147,34 @@ print("\n--- TASK 7 ---")
 
 rental_with_hours_df = rental_df.withColumn(
     "actual_hours", 
-    (F.unix_timestamp("return_date") - F.unix_timestamp("rental_date")) / 3600
+    (F.unix_timestamp(F.coalesce(F.col("return_date"), F.current_timestamp())) - F.unix_timestamp("rental_date")) / 3600
 )
 
-base_df = category_df \
-    .join(film_category_df, "category_id") \
-    .join(inventory_df, "film_id") \
-    .join(rental_with_hours_df, "inventory_id") \
-    .join(customer_df, "customer_id") \
-    .join(address_df, "address_id") \
-    .join(city_df, "city_id")
+base_df = category_df.alias("c") \
+    .join(film_category_df.alias("fc"), "category_id") \
+    .join(inventory_df.alias("i"), "film_id") \
+    .join(rental_with_hours_df.alias("r"), "inventory_id") \
+    .join(customer_df.alias("cu"), "customer_id") \
+    .join(address_df.alias("a"), "address_id") \
+    .join(city_df.alias("ci"), "city_id")
 
 base_df.cache()
 
 df_city_a = base_df \
-    .filter(F.lower(F.col("city")).startswith("a")) \
-    .groupBy(category_df["name"]) \
-    .agg(F.sum("actual_hours").alias("total_hours")) \
+    .filter(F.lower(F.col("ci.city")).startswith("a")) \
+    .groupBy(F.col("c.name")) \
+    .agg(F.round(F.sum("r.actual_hours"), 2).alias("total_hours")) \
     .orderBy(F.desc("total_hours")) \
-    .limit(1).alias("cities_a")
+    .limit(1) \
+    .withColumn("group", F.lit("cities_a"))
 
 df_city_dash = base_df \
-    .filter(F.col("city").contains("-")) \
-    .groupBy(category_df["name"]) \
-    .agg(F.sum("actual_hours").alias("total_hours")) \
+    .filter(F.col("ci.city").contains("-")) \
+    .groupBy(F.col("c.name")) \
+    .agg(F.round(F.sum("r.actual_hours"), 2).alias("total_hours")) \
     .orderBy(F.desc("total_hours")) \
-    .limit(1).alias("cities_dash")
+    .limit(1) \
+    .withColumn("group", F.lit("cities_dash"))
 
 df_city_a.union(df_city_dash).show()
 
