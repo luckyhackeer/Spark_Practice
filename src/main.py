@@ -62,7 +62,6 @@ print("\n--- TASK 2 ---")
 
 actor_df\
     .join(film_actor_df, "actor_id")\
-    .join(film_df, "film_id")\
     .join(inventory_df, "film_id")\
     .join(rental_df, "inventory_id")\
     .groupBy("first_name", "last_name")\
@@ -78,7 +77,6 @@ print("\n--- TASK 3 ---")
 
 category_df\
     .join(film_category_df, "category_id")\
-    .join(film_df, "film_id")\
     .join(inventory_df, "film_id")\
     .join(rental_df, "inventory_id")\
     .join(payment_df, "rental_id")\
