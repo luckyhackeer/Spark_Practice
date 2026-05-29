@@ -93,7 +93,6 @@ print("\n--- TASK 4 ---")
 
 film_df\
     .join(inventory_df, "film_id","left_anti")\
-    .filter("inventory_id is null")\
     .select("title")\
     .show()
 
